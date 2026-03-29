@@ -9,66 +9,77 @@ import type { TrackingFrame, FaceData, EulerAngles, BlendShapeMap } from "../typ
 /**
  * MediaPipe のブレンドシェイプ名を独自名にマッピングするテーブル。
  * 将来別のトラッカーに切り替えても Mapper 側のコードを変えなくて済む。
+ * 現時点では最小限のマッピングのみ。拡張する場合はここにエントリを追加する。
  */
 const BLEND_SHAPE_MAP: Record<string, string> = {
-  eyeBlinkLeft:      "eye_l.blink",
-  eyeBlinkRight:     "eye_r.blink",
-  jawOpen:           "mouth.open",
-  browDownLeft:      "brow_l.down",
-  browDownRight:     "brow_r.down",
-  browInnerUp:       "brow.inner_up",
-  mouthSmileLeft:    "mouth.smile_l",
-  mouthSmileRight:   "mouth.smile_r",
+  eyeBlinkLeft:   "eye_l.blink",
+  eyeBlinkRight:  "eye_r.blink",
+  jawOpen:        "mouth.open",
+  browDownLeft:   "brow_l.down",
+  browDownRight:  "brow_r.down",
+  browInnerUp:    "brow.inner_up",
+  mouthSmileLeft: "mouth.smile_l",
+  mouthSmileRight:"mouth.smile_r",
 };
 
 /** MediaPipe FaceLandmarker の wasm/model ファイル配置場所 */
 const VISION_WASM_URL =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 
+const MODEL_ASSET_PATH =
+  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+
 export class TrackerImpl implements Tracker {
   private landmarker: FaceLandmarker | null = null;
   private video: HTMLVideoElement | null = null;
   private stream: MediaStream | null = null;
   private latestFrame: TrackingFrame | null = null;
-  private animFrameId: number | null = null;
+  private loopRunning = false;
 
   async start(): Promise<void> {
-    // MediaPipe 初期化
-    const vision = await FilesetResolver.forVisionTasks(VISION_WASM_URL);
-    this.landmarker = await FaceLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-        delegate: "GPU",
-      },
-      runningMode: "VIDEO",
-      numFaces: 1,
-      outputFaceBlendshapes: true,
-      outputFacialTransformationMatrixes: true,
-    });
+    // 部分的初期化を防ぐため try-catch で全体を包み、失敗時は stop() でクリーンアップする
+    try {
+      const vision = await FilesetResolver.forVisionTasks(VISION_WASM_URL);
+      this.landmarker = await FaceLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: MODEL_ASSET_PATH,
+          delegate: "GPU",
+        },
+        runningMode: "VIDEO",
+        numFaces: 1,
+        outputFaceBlendshapes: true,
+        outputFacialTransformationMatrixes: true,
+      });
 
-    // カメラ取得
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480, facingMode: "user" },
-    });
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480, facingMode: "user" },
+      });
 
-    this.video = document.createElement("video");
-    this.video.srcObject = this.stream;
-    this.video.playsInline = true;
-    await this.video.play();
+      const video = document.createElement("video");
+      video.srcObject = this.stream;
+      video.playsInline = true;
+      // 非表示で body に追加することでブラウザ互換性を確保する
+      video.style.cssText = "position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;";
+      document.body.appendChild(video);
+      await video.play();
+      this.video = video;
 
-    // 推論ループ開始
-    this.scheduleDetection();
+      this.loopRunning = true;
+      this.runLoop();
+    } catch (err) {
+      this.stop();
+      throw err;
+    }
   }
 
   stop(): void {
-    if (this.animFrameId !== null) {
-      cancelAnimationFrame(this.animFrameId);
-      this.animFrameId = null;
-    }
+    this.loopRunning = false;
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
-    this.video = null;
+    if (this.video) {
+      this.video.remove();
+      this.video = null;
+    }
     this.landmarker?.close();
     this.landmarker = null;
     this.latestFrame = null;
@@ -81,19 +92,28 @@ export class TrackerImpl implements Tracker {
   // -----------------------------------------------------------------------
   // private
 
-  private scheduleDetection(): void {
-    this.animFrameId = requestAnimationFrame(() => {
-      this.detect();
-      this.scheduleDetection();
-    });
+  /** rAF ループ。loopRunning フラグで停止を制御し、競合状態を防ぐ */
+  private runLoop(): void {
+    if (!this.loopRunning) return;
+
+    this.detect();
+
+    requestAnimationFrame(() => this.runLoop());
   }
 
   private detect(): void {
     if (!this.landmarker || !this.video || this.video.readyState < 2) return;
 
-    const timestamp = performance.now();
-    const result = this.landmarker.detectForVideo(this.video, timestamp);
-    this.latestFrame = this.parseResult(result, timestamp);
+    try {
+      const timestamp = performance.now();
+      const result = this.landmarker.detectForVideo(this.video, timestamp);
+      this.latestFrame = this.parseResult(result, timestamp);
+    } catch (err) {
+      // 推論失敗は次フレームに引き継ぐ（latestFrame は前回値を維持）
+      if (import.meta.env.DEV) {
+        console.warn("[TrackerImpl] detect() failed:", err);
+      }
+    }
   }
 
   private parseResult(
@@ -110,7 +130,13 @@ export class TrackerImpl implements Tracker {
       : { pitch: 0, yaw: 0, roll: 0 };
 
     const blendShapes = this.parseBlendShapes(result);
-    const confidence = result.faceLandmarks[0] ? 1.0 : 0.0;
+
+    // faceBlendshapes の平均スコアを confidence の近似値として使用する。
+    // より正確な値が必要な場合は FaceLandmarker の minFaceDetectionConfidence を参照すること。
+    const categories = result.faceBlendshapes?.[0]?.categories ?? [];
+    const confidence = categories.length > 0
+      ? categories.reduce((sum, c) => sum + c.score, 0) / categories.length
+      : 0.5;
 
     const face: FaceData = { headRotation, blendShapes, confidence };
     return { timestamp, face };

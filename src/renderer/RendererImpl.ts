@@ -2,7 +2,10 @@ import { Application, Container, Graphics } from "pixi.js";
 import type { Renderer } from "./Renderer.js";
 import type { AvatarPartConfig, PartTransform } from "../types/tracking.js";
 
-/** モックアップ用の仮パーツ描画設定 */
+/**
+ * モックアップ用の仮パーツ描画設定。
+ * TODO: PNG素材実装後に削除し、AvatarPartConfig.texturePath でテクスチャを読み込む形に移行する。
+ */
 const MOCK_SHAPES: Record<string, { color: number; width: number; height: number }> = {
   root:  { color: 0x4a90d9, width: 80,  height: 120 },
   head:  { color: 0xf5a623, width: 70,  height: 70  },
@@ -31,10 +34,18 @@ export class RendererImpl implements Renderer {
       resolution: window.devicePixelRatio ?? 1,
       resizeTo: canvas.parentElement ?? window,
     });
+
+    // リサイズ時にルートパーツの位置を再計算するためイベントをリッスンする
+    this.app.renderer.on("resize", () => this.repositionRoots());
   }
 
   async loadParts(configs: AvatarPartConfig[]): Promise<void> {
     if (!this.app) throw new Error("init() must be called before loadParts()");
+
+    // 再ロード時に既存のパーツをクリアする（多重呼び出し対策）
+    this.parts.forEach((c) => c.destroy({ children: true }));
+    this.parts.clear();
+    this.app.stage.removeChildren();
 
     const containers = new Map<string, Container>();
 
@@ -70,20 +81,22 @@ export class RendererImpl implements Renderer {
 
     // 親子関係を構築
     for (const config of configs) {
-      const container = containers.get(config.id)!;
+      const container = containers.get(config.id);
+      if (!container) continue;
+
       if (config.parentId) {
         const parent = containers.get(config.parentId);
         if (!parent) throw new Error(`Parent not found: ${config.parentId}`);
         parent.addChild(container);
       } else {
-        // ルートパーツは Stage の中央に配置
-        const { width, height } = this.app.screen;
-        container.position.set(width / 2, height / 2);
         this.app.stage.addChild(container);
       }
     }
 
     this.parts = containers;
+
+    // ルートパーツをステージ中央に配置（init 後のサイズ確定を待って実行）
+    this.repositionRoots();
   }
 
   updatePart(id: string, transform: PartTransform): void {
@@ -106,5 +119,21 @@ export class RendererImpl implements Renderer {
     this.app?.destroy(false, { children: true });
     this.app = null;
     this.parts.clear();
+  }
+
+  // -----------------------------------------------------------------------
+  // private
+
+  /** parentId を持たないルートパーツをステージ中央に再配置する */
+  private repositionRoots(): void {
+    if (!this.app) return;
+    const { width, height } = this.app.screen;
+    if (width === 0 || height === 0) return;
+
+    for (const container of this.app.stage.children) {
+      if (container instanceof Container) {
+        container.position.set(width / 2, height / 2);
+      }
+    }
   }
 }

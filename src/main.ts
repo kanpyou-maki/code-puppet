@@ -28,8 +28,11 @@ async function main(): Promise<void> {
       for (const [id, transform] of transforms) {
         try {
           renderer.updatePart(id, transform);
-        } catch {
-          // 存在しないパーツIDはスキップ
+        } catch (err) {
+          // 存在しないパーツIDはスキップ（開発環境では警告を出す）
+          if (import.meta.env.DEV) {
+            console.warn(`[main] updatePart failed for "${id}":`, err);
+          }
         }
       }
     }
