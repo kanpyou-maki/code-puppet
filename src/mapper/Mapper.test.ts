@@ -30,20 +30,24 @@ describe("DefaultMapper", () => {
     expect(result.size).toBe(0);
   });
 
-  it("head の rotation が yaw に基づいて設定される", () => {
+  it("body の rotation が yaw に基づいて設定される", () => {
     const result = mapper.apply(makeFrame(0, 0.5, 0));
-    expect(result.get("head")?.rotation).toBeCloseTo(0.5, 5);
+    expect(result.get("body")?.rotation).toBeCloseTo(0.5, 5);
   });
 
-  it("head の rotation が roll に基づいて設定される", () => {
+  it("body の rotation が roll に基づいて設定される", () => {
     const result = mapper.apply(makeFrame(0, 0, 0.3));
-    // roll も head の rotation に加算される
-    expect(result.get("head")?.rotation).toBeCloseTo(0.3, 5);
+    expect(result.get("body")?.rotation).toBeCloseTo(0.3, 5);
   });
 
-  it("yaw と roll が合算されて head の rotation になる", () => {
+  it("yaw と roll が合算されて body の rotation になる", () => {
     const result = mapper.apply(makeFrame(0, 0.4, 0.2));
-    expect(result.get("head")?.rotation).toBeCloseTo(0.6, 5);
+    expect(result.get("body")?.rotation).toBeCloseTo(0.6, 5);
+  });
+
+  it("leaf の rotation が pitch に基づいて設定される", () => {
+    const result = mapper.apply(makeFrame(0.4, 0, 0));
+    expect(result.get("leaf")?.rotation).toBeCloseTo(0.2, 5);
   });
 
   it("eye_l.blink が 1.0 のとき eye_l の scaleY が 0 に近づく", () => {
@@ -67,9 +71,10 @@ describe("DefaultMapper", () => {
     expect(result.get("mouth")?.scaleY).toBeCloseTo(1.0, 5);
   });
 
-  it("tail は pitch に基づいて rotation が設定される", () => {
-    const result = mapper.apply(makeFrame(0.3, 0, 0));
-    expect(result.get("tail")?.rotation).toBeCloseTo(0.3, 5);
+  it("cheek_l / cheek_r は Mapper から操作されない（静止パーツ）", () => {
+    const result = mapper.apply(makeFrame(0.5, 0.5, 0.5));
+    expect(result.has("cheek_l")).toBe(false);
+    expect(result.has("cheek_r")).toBe(false);
   });
 
   it("confidence が低い（0.3 未満）場合は空の Map を返す", () => {

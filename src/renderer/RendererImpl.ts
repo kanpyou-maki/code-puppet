@@ -7,14 +7,17 @@ import type { AvatarPartConfig, PartTransform } from "../types/tracking.js";
  * TODO: PNG素材実装後に削除し、AvatarPartConfig.texturePath でテクスチャを読み込む形に移行する。
  */
 const MOCK_SHAPES: Record<string, { color: number; width: number; height: number }> = {
-  root:  { color: 0x4a90d9, width: 80,  height: 120 },
-  head:  { color: 0xf5a623, width: 70,  height: 70  },
-  eye_l: { color: 0x1a1a1a, width: 14,  height: 14  },
-  eye_r: { color: 0x1a1a1a, width: 14,  height: 14  },
-  mouth: { color: 0xe05050, width: 30,  height: 10  },
-  arm_l: { color: 0x4a90d9, width: 20,  height: 70  },
-  arm_r: { color: 0x4a90d9, width: 20,  height: 70  },
-  tail:  { color: 0x7b68ee, width: 20,  height: 80  },
+  body:    { color: 0xf0f0ee, width: 130, height: 130 },
+  leaf:    { color: 0x6abf69, width: 70,  height: 80  },
+  eye_l:   { color: 0x1a1a1a, width: 14,  height: 14  },
+  eye_r:   { color: 0x1a1a1a, width: 14,  height: 14  },
+  mouth:   { color: 0x333333, width: 28,  height: 8   },
+  cheek_l: { color: 0xf4a0b0, width: 22,  height: 16  },
+  cheek_r: { color: 0xf4a0b0, width: 22,  height: 16  },
+  arm_l:   { color: 0x1a1a1a, width: 12,  height: 60  },
+  arm_r:   { color: 0x1a1a1a, width: 12,  height: 60  },
+  leg_l:   { color: 0x1a1a1a, width: 12,  height: 50  },
+  leg_r:   { color: 0x1a1a1a, width: 12,  height: 50  },
 };
 
 const DEFAULT_SHAPE = { color: 0x888888, width: 30, height: 30 };
