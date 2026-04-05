@@ -131,14 +131,9 @@ export class TrackerImpl implements Tracker {
 
     const blendShapes = this.parseBlendShapes(result);
 
-    // faceBlendshapes の平均スコアを confidence の近似値として使用する。
-    // より正確な値が必要な場合は FaceLandmarker の minFaceDetectionConfidence を参照すること。
-    const categories = result.faceBlendshapes?.[0]?.categories ?? [];
-    const confidence = categories.length > 0
-      ? categories.reduce((sum, c) => sum + c.score, 0) / categories.length
-      : 0.5;
-
-    const face: FaceData = { headRotation, blendShapes, confidence };
+    // faceLandmarks が存在する時点で顔検出は成功している。
+    // confidence は 1.0 固定とし、検出失敗（landmarks なし）は上の early return で処理する。
+    const face: FaceData = { headRotation, blendShapes, confidence: 1.0 };
     return { timestamp, face };
   }
 

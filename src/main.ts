@@ -21,8 +21,18 @@ async function main(): Promise<void> {
 
   // --- rAF メインループ ---
   // Tracker（非同期）と Renderer（同期）を latestFrame バッファ経由で疎結合にする
+  let devLogCounter = 0;
   function loop(): void {
     const frame = tracker.getLatestFrame();
+
+    if (import.meta.env.DEV) {
+      // 60フレームに1回（約1秒）トラッキング状況をログ出力
+      if (devLogCounter % 60 === 0) {
+        console.log("[main] frame:", frame ? (frame.face ? `顔検出 pitch=${frame.face.headRotation.pitch.toFixed(2)} yaw=${frame.face.headRotation.yaw.toFixed(2)}` : "顔未検出") : "フレームなし");
+      }
+      devLogCounter++;
+    }
+
     if (frame) {
       const transforms = mapper.apply(frame);
       for (const [id, transform] of transforms) {
