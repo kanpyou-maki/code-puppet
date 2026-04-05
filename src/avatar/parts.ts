@@ -37,22 +37,22 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
     zIndex: 2,
   },
 
-  // 左目
+  // 左目（アバター目線の左 = ユーザーから見て右 = 正の x）
   {
     id: "eye_l",
     texturePath: "/assets/avatar/eye_l.png",
     parentId: "body",
-    defaultPosition: { x: -25, y: -10 },
+    defaultPosition: { x: 25, y: -10 },
     pivot: { x: 0.5, y: 0.5 },
     zIndex: 1,
   },
 
-  // 右目
+  // 右目（アバター目線の右 = ユーザーから見て左 = 負の x）
   {
     id: "eye_r",
     texturePath: "/assets/avatar/eye_r.png",
     parentId: "body",
-    defaultPosition: { x: 25, y: -10 },
+    defaultPosition: { x: -25, y: -10 },
     pivot: { x: 0.5, y: 0.5 },
     zIndex: 1,
   },
@@ -67,42 +67,44 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
     zIndex: 1,
   },
 
-  // 左腕（手を含む）。体の左側面・肩位置から生える
+  // 左腕（アバター目線の左 = ユーザーから見て右 = 正の x）
+  // pivot.x: 0.0 = 画像左端が肩の接続点
   {
     id: "arm_l",
     texturePath: "/assets/avatar/arm_l.png",
-    parentId: "body",
-    defaultPosition: { x: -80, y: 10 },
-    pivot: { x: 1.0, y: 0.1 },
-    zIndex: -1,
-  },
-
-  // 右腕（手を含む）
-  {
-    id: "arm_r",
-    texturePath: "/assets/avatar/arm_r.png",
     parentId: "body",
     defaultPosition: { x: 80, y: 10 },
     pivot: { x: 0.0, y: 0.1 },
     zIndex: -1,
   },
 
-  // 左脚（足を含む）。体下部から生える
+  // 右腕（アバター目線の右 = ユーザーから見て左 = 負の x）
+  // pivot.x: 1.0 = 画像右端が肩の接続点
+  {
+    id: "arm_r",
+    texturePath: "/assets/avatar/arm_r.png",
+    parentId: "body",
+    defaultPosition: { x: -80, y: 10 },
+    pivot: { x: 1.0, y: 0.1 },
+    zIndex: -1,
+  },
+
+  // 左脚（アバター目線の左 = ユーザーから見て右 = 正の x）
   {
     id: "leg_l",
     texturePath: "/assets/avatar/leg_l.png",
     parentId: "body",
-    defaultPosition: { x: -30, y: 95 },
+    defaultPosition: { x: 30, y: 95 },
     pivot: { x: 0.5, y: 0.0 },
     zIndex: -1,
   },
 
-  // 右脚（足を含む）
+  // 右脚（アバター目線の右 = ユーザーから見て左 = 負の x）
   {
     id: "leg_r",
     texturePath: "/assets/avatar/leg_r.png",
     parentId: "body",
-    defaultPosition: { x: 30, y: 95 },
+    defaultPosition: { x: -30, y: 95 },
     pivot: { x: 0.5, y: 0.0 },
     zIndex: -1,
   },
