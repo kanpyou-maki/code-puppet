@@ -118,11 +118,18 @@ export class RendererImpl implements Renderer {
     config: AvatarPartConfig
   ): Promise<{ child: Sprite | Graphics; width: number; height: number }> {
     if (config.texturePath) {
-      const texture = await Assets.load(config.texturePath);
-      const sprite = new Sprite(texture);
-      // Sprite の原点をキャンバス左上に合わせ、pivot でオフセットする
-      sprite.anchor.set(0);
-      return { child: sprite, width: texture.width, height: texture.height };
+      try {
+        const texture = await Assets.load(config.texturePath);
+        const sprite = new Sprite(texture);
+        // anchor(0.5, 0.5) にすることで Sprite の中心がローカル原点(0,0)になり
+        // Graphics と同じ座標系で pivot 計算が正しく機能する
+        sprite.anchor.set(0.5, 0.5);
+        return { child: sprite, width: texture.width, height: texture.height };
+      } catch {
+        if (import.meta.env.DEV) {
+          console.warn(`[RendererImpl] テクスチャ読み込み失敗: ${config.texturePath} → Graphics で代替`);
+        }
+      }
     }
 
     // フォールバック: Graphics で仮パーツを描画
