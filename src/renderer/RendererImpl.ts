@@ -1,23 +1,21 @@
-import { Application, Container, Graphics } from "pixi.js";
+import { Application, Assets, Container, Graphics, Sprite } from "pixi.js";
 import type { Renderer } from "./Renderer.js";
 import type { AvatarPartConfig, PartTransform } from "../types/tracking.js";
 
 /**
- * モックアップ用の仮パーツ描画設定。
- * TODO: PNG素材実装後に削除し、AvatarPartConfig.texturePath でテクスチャを読み込む形に移行する。
+ * texturePath が未指定のパーツ用フォールバック描画設定。
+ * TODO: 全パーツに PNG 素材が揃ったら削除する。
  */
 const MOCK_SHAPES: Record<string, { color: number; width: number; height: number }> = {
-  body:    { color: 0xf0f0ee, width: 130, height: 130 },
-  leaf:    { color: 0x6abf69, width: 70,  height: 80  },
-  eye_l:   { color: 0x1a1a1a, width: 14,  height: 14  },
-  eye_r:   { color: 0x1a1a1a, width: 14,  height: 14  },
-  mouth:   { color: 0x333333, width: 28,  height: 8   },
-  cheek_l: { color: 0xf4a0b0, width: 22,  height: 16  },
-  cheek_r: { color: 0xf4a0b0, width: 22,  height: 16  },
-  arm_l:   { color: 0x1a1a1a, width: 12,  height: 60  },
-  arm_r:   { color: 0x1a1a1a, width: 12,  height: 60  },
-  leg_l:   { color: 0x1a1a1a, width: 12,  height: 50  },
-  leg_r:   { color: 0x1a1a1a, width: 12,  height: 50  },
+  body:  { color: 0xf0f0ee, width: 130, height: 130 },
+  leaf:  { color: 0x6abf69, width: 70,  height: 80  },
+  eye_l: { color: 0x1a1a1a, width: 14,  height: 14  },
+  eye_r: { color: 0x1a1a1a, width: 14,  height: 14  },
+  mouth: { color: 0x333333, width: 28,  height: 8   },
+  arm_l: { color: 0x1a1a1a, width: 12,  height: 60  },
+  arm_r: { color: 0x1a1a1a, width: 12,  height: 60  },
+  leg_l: { color: 0x1a1a1a, width: 12,  height: 50  },
+  leg_r: { color: 0x1a1a1a, width: 12,  height: 50  },
 };
 
 const DEFAULT_SHAPE = { color: 0x888888, width: 30, height: 30 };
@@ -38,47 +36,34 @@ export class RendererImpl implements Renderer {
       resizeTo: canvas.parentElement ?? window,
     });
 
-    // リサイズ時にルートパーツの位置を再計算するためイベントをリッスンする
     this.app.renderer.on("resize", () => this.repositionRoots());
   }
 
   async loadParts(configs: AvatarPartConfig[]): Promise<void> {
     if (!this.app) throw new Error("init() must be called before loadParts()");
 
-    // 再ロード時に既存のパーツをクリアする（多重呼び出し対策）
+    // 再ロード時に既存パーツをクリア
     this.parts.forEach((c) => c.destroy({ children: true }));
     this.parts.clear();
     this.app.stage.removeChildren();
 
     const containers = new Map<string, Container>();
 
-    // 全パーツの Container を生成
     for (const config of configs) {
       const container = new Container();
       container.label = config.id;
       container.position.set(config.defaultPosition.x, config.defaultPosition.y);
       if (config.zIndex !== undefined) container.zIndex = config.zIndex;
 
-      // 仮パーツ描画（PNG素材がない段階はGraphicsで代替）
-      const shape = MOCK_SHAPES[config.id] ?? DEFAULT_SHAPE;
-      const g = new Graphics();
-      g.roundRect(
-        -shape.width / 2,
-        -shape.height / 2,
-        shape.width,
-        shape.height,
-        6
-      );
-      g.fill(shape.color);
-      g.stroke({ color: 0xffffff, width: 1, alpha: 0.3 });
+      const { child, width, height } = await this.buildChild(config);
 
-      // pivot は正規化値 → ピクセルに変換
+      // pivot を正規化値 → ピクセルに変換
       container.pivot.set(
-        (config.pivot.x - 0.5) * shape.width,
-        (config.pivot.y - 0.5) * shape.height
+        (config.pivot.x - 0.5) * width,
+        (config.pivot.y - 0.5) * height
       );
 
-      container.addChild(g);
+      container.addChild(child);
       containers.set(config.id, container);
     }
 
@@ -97,8 +82,6 @@ export class RendererImpl implements Renderer {
     }
 
     this.parts = containers;
-
-    // ルートパーツをステージ中央に配置（init 後のサイズ確定を待って実行）
     this.repositionRoots();
   }
 
@@ -127,7 +110,30 @@ export class RendererImpl implements Renderer {
   // -----------------------------------------------------------------------
   // private
 
-  /** parentId を持たないルートパーツをステージ中央に再配置する */
+  /**
+   * texturePath があれば Sprite、なければ Graphics（仮パーツ）を生成して返す。
+   * width / height は pivot 計算に使うため一緒に返す。
+   */
+  private async buildChild(
+    config: AvatarPartConfig
+  ): Promise<{ child: Sprite | Graphics; width: number; height: number }> {
+    if (config.texturePath) {
+      const texture = await Assets.load(config.texturePath);
+      const sprite = new Sprite(texture);
+      // Sprite の原点をキャンバス左上に合わせ、pivot でオフセットする
+      sprite.anchor.set(0);
+      return { child: sprite, width: texture.width, height: texture.height };
+    }
+
+    // フォールバック: Graphics で仮パーツを描画
+    const shape = MOCK_SHAPES[config.id] ?? DEFAULT_SHAPE;
+    const g = new Graphics();
+    g.roundRect(-shape.width / 2, -shape.height / 2, shape.width, shape.height, 6);
+    g.fill(shape.color);
+    g.stroke({ color: 0xffffff, width: 1, alpha: 0.3 });
+    return { child: g, width: shape.width, height: shape.height };
+  }
+
   private repositionRoots(): void {
     if (!this.app) return;
     const { width, height } = this.app.screen;

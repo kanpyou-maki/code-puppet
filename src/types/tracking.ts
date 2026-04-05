@@ -51,6 +51,11 @@ export interface TrackingFrame {
 /** アバターパーツの設定 */
 export interface AvatarPartConfig {
   id: string;
+  /**
+   * テクスチャ画像のパス（public/ からの相対パス）。
+   * 省略した場合は Graphics による仮パーツを描画する。
+   */
+  texturePath?: string;
   /** 親パーツID。undefined のときルートパーツとして扱う */
   parentId?: string;
   /** Scene Graph 内のローカル初期位置 */

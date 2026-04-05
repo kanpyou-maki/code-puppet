@@ -14,7 +14,6 @@ import type { AvatarPartConfig } from "../types/tracking.js";
  *   ├── leaf（葉っぱ3枚を1パーツ）
  *   ├── eye_l / eye_r
  *   ├── mouth
- *   ├── cheek_l / cheek_r（静止）
  *   ├── arm_l / arm_r（手を含む）
  *   └── leg_l / leg_r（足を含む）
  */
@@ -22,6 +21,7 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 大根本体（頭胴一体）。Stage 中央に配置されるルートパーツ
   {
     id: "body",
+    texturePath: "/assets/avatar/body.png",
     defaultPosition: { x: 0, y: 0 },
     pivot: { x: 0.5, y: 0.5 },
     zIndex: 0,
@@ -30,6 +30,7 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 葉っぱ（3枚を1パーツ）。body 上端から生える。根元で揺れる
   {
     id: "leaf",
+    texturePath: "/assets/avatar/leaf.png",
     parentId: "body",
     defaultPosition: { x: 0, y: -100 },
     pivot: { x: 0.5, y: 1.0 },
@@ -39,6 +40,7 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 左目
   {
     id: "eye_l",
+    texturePath: "/assets/avatar/eye_l.png",
     parentId: "body",
     defaultPosition: { x: -25, y: -10 },
     pivot: { x: 0.5, y: 0.5 },
@@ -48,6 +50,7 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 右目
   {
     id: "eye_r",
+    texturePath: "/assets/avatar/eye_r.png",
     parentId: "body",
     defaultPosition: { x: 25, y: -10 },
     pivot: { x: 0.5, y: 0.5 },
@@ -57,26 +60,9 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 口
   {
     id: "mouth",
+    texturePath: "/assets/avatar/mouth.png",
     parentId: "body",
     defaultPosition: { x: 0, y: 20 },
-    pivot: { x: 0.5, y: 0.5 },
-    zIndex: 1,
-  },
-
-  // ほっぺ左（静止パーツ。トラッキングでは動かさない）
-  {
-    id: "cheek_l",
-    parentId: "body",
-    defaultPosition: { x: -45, y: 5 },
-    pivot: { x: 0.5, y: 0.5 },
-    zIndex: 1,
-  },
-
-  // ほっぺ右（静止パーツ）
-  {
-    id: "cheek_r",
-    parentId: "body",
-    defaultPosition: { x: 45, y: 5 },
     pivot: { x: 0.5, y: 0.5 },
     zIndex: 1,
   },
@@ -84,6 +70,7 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 左腕（手を含む）。体の左側面・肩位置から生える
   {
     id: "arm_l",
+    texturePath: "/assets/avatar/arm_l.png",
     parentId: "body",
     defaultPosition: { x: -80, y: 10 },
     pivot: { x: 1.0, y: 0.1 },
@@ -93,6 +80,7 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 右腕（手を含む）
   {
     id: "arm_r",
+    texturePath: "/assets/avatar/arm_r.png",
     parentId: "body",
     defaultPosition: { x: 80, y: 10 },
     pivot: { x: 0.0, y: 0.1 },
@@ -102,6 +90,7 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 左脚（足を含む）。体下部から生える
   {
     id: "leg_l",
+    texturePath: "/assets/avatar/leg_l.png",
     parentId: "body",
     defaultPosition: { x: -30, y: 95 },
     pivot: { x: 0.5, y: 0.0 },
@@ -111,6 +100,7 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
   // 右脚（足を含む）
   {
     id: "leg_r",
+    texturePath: "/assets/avatar/leg_r.png",
     parentId: "body",
     defaultPosition: { x: 30, y: 95 },
     pivot: { x: 0.5, y: 0.0 },
