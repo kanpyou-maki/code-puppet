@@ -77,6 +77,34 @@ describe("DefaultMapper", () => {
     expect(result.has("cheek_r")).toBe(false);
   });
 
+  it("roll が正のとき arm_l / arm_r が反対方向に回転する（振り子効果）", () => {
+    const result = mapper.apply(makeFrame(0, 0, 0.6));
+    const armL = result.get("arm_l")?.rotation ?? 0;
+    const armR = result.get("arm_r")?.rotation ?? 0;
+    expect(armL).toBeLessThan(0);
+    expect(armR).toBeLessThan(0);
+  });
+
+  it("roll がゼロのとき arm の rotation もゼロ", () => {
+    const result = mapper.apply(makeFrame(0, 0, 0));
+    expect(result.get("arm_l")?.rotation).toBeCloseTo(0, 5);
+    expect(result.get("arm_r")?.rotation).toBeCloseTo(0, 5);
+  });
+
+  it("pitch が正のとき leg_l と leg_r が外側に開く", () => {
+    const result = mapper.apply(makeFrame(0.5, 0, 0));
+    const legL = result.get("leg_l")?.rotation ?? 0;
+    const legR = result.get("leg_r")?.rotation ?? 0;
+    expect(legL).toBeGreaterThan(0);
+    expect(legR).toBeLessThan(0);
+  });
+
+  it("pitch がゼロのとき leg の rotation もゼロ", () => {
+    const result = mapper.apply(makeFrame(0, 0, 0));
+    expect(result.get("leg_l")?.rotation).toBeCloseTo(0, 5);
+    expect(result.get("leg_r")?.rotation).toBeCloseTo(0, 5);
+  });
+
   it("confidence が低い（0.3 未満）場合は空の Map を返す", () => {
     const frame: TrackingFrame = {
       timestamp: 0,

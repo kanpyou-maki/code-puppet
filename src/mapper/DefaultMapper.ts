@@ -48,6 +48,14 @@ export class DefaultMapper implements Mapper {
       scaleY: 1.0 + mouthOpen * (MOUTH_MAX_SCALE_Y - 1.0),
     });
 
+    // 腕: body の roll と逆方向に回転（振り子効果 — 体が傾いても腕が自然に垂れる）
+    result.set("arm_l", { rotation: -roll * 0.4 });
+    result.set("arm_r", { rotation: -roll * 0.4 });
+
+    // 脚: pitch に応じて左右が逆方向に開く（前後の重心移動を表現）
+    result.set("leg_l", { rotation:  pitch * 0.3 });
+    result.set("leg_r", { rotation: -pitch * 0.3 });
+
     // cheek_l / cheek_r は静止パーツのため Mapper では操作しない
 
     return result;
