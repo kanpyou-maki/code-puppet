@@ -5,7 +5,7 @@ import type { TrackingFrame, PartTransform } from "../types/tracking.js";
 const CONFIDENCE_THRESHOLD = 0.3;
 
 /** この値以上で mouth_open を表示し、mouth_closed を非表示にする */
-const MOUTH_OPEN_THRESHOLD = 0.3;
+const MOUTH_OPEN_THRESHOLD = 0.1;
 
 export class DefaultMapper implements Mapper {
   apply(frame: TrackingFrame): Map<string, PartTransform> {
@@ -46,7 +46,7 @@ export class DefaultMapper implements Mapper {
     const mouthOpen = bs["mouth.open"] ?? 0;
     const isOpen = mouthOpen >= MOUTH_OPEN_THRESHOLD;
     result.set("mouth_closed", { visible: !isOpen });
-    result.set("mouth_open",   { visible:  isOpen });
+    result.set("mouth_open", { visible: isOpen });
 
     // 腕: body の roll と逆方向に回転（振り子効果 — 体が傾いても腕が自然に垂れる）
     result.set("arm_l", { rotation: -roll * 0.4 });
