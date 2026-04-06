@@ -78,4 +78,6 @@ export interface PartTransform {
   scaleX?: number;
   scaleY?: number;
   visible?: boolean;
+  /** 不透明度（0.0 = 透明, 1.0 = 不透明） */
+  alpha?: number;
 }
