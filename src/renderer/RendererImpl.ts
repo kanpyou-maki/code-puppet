@@ -95,7 +95,6 @@ export class RendererImpl implements Renderer {
     if (transform.scaleX !== undefined) container.scale.x = transform.scaleX;
     if (transform.scaleY !== undefined) container.scale.y = transform.scaleY;
     if (transform.visible !== undefined) container.visible = transform.visible;
-    if (transform.alpha !== undefined) container.alpha = transform.alpha;
   }
 
   getPartCount(): number {
