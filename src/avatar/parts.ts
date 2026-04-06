@@ -13,7 +13,7 @@ import type { AvatarPartConfig } from "../types/tracking.js";
  *   body（大根本体・頭胴一体）← root
  *   ├── leaf（葉っぱ3枚を1パーツ）
  *   ├── eye_l / eye_r
- *   ├── mouth
+ *   ├── mouth_closed / mouth_open（排他表示）
  *   ├── arm_l / arm_r（手を含む）
  *   └── leg_l / leg_r（足を含む）
  */
@@ -57,10 +57,20 @@ export const AVATAR_PARTS: AvatarPartConfig[] = [
     zIndex: 1,
   },
 
-  // 口
+  // 口（閉じ）: デフォルト表示
   {
-    id: "mouth",
-    texturePath: "/assets/avatar/mouth.png",
+    id: "mouth_closed",
+    texturePath: "/assets/avatar/mouth_closed.png",
+    parentId: "body",
+    defaultPosition: { x: 0, y: -10 },
+    pivot: { x: 0.5, y: 0.5 },
+    zIndex: 1,
+  },
+
+  // 口（開き）: mouth.open が閾値を超えたときに表示
+  {
+    id: "mouth_open",
+    texturePath: "/assets/avatar/mouth_open.png",
     parentId: "body",
     defaultPosition: { x: 0, y: -10 },
     pivot: { x: 0.5, y: 0.5 },

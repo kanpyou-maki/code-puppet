@@ -4,8 +4,8 @@ import type { TrackingFrame, PartTransform } from "../types/tracking.js";
 /** confidence がこの値未満のフレームは無視する */
 const CONFIDENCE_THRESHOLD = 0.3;
 
-/** 口の最大スケール（mouth.open = 1.0 のとき） */
-const MOUTH_MAX_SCALE_Y = 2.5;
+/** この値以上で mouth_open を表示し、mouth_closed を非表示にする */
+const MOUTH_OPEN_THRESHOLD = 0.3;
 
 export class DefaultMapper implements Mapper {
   apply(frame: TrackingFrame): Map<string, PartTransform> {
@@ -42,11 +42,11 @@ export class DefaultMapper implements Mapper {
       scaleY: 1.0 - eyeRBlink,
     });
 
-    // 口: mouth.open → scaleY（1.0〜MOUTH_MAX_SCALE_Y）
+    // 口: mouth.open が閾値を超えたら mouth_open を表示、それ以外は mouth_closed を表示
     const mouthOpen = bs["mouth.open"] ?? 0;
-    result.set("mouth", {
-      scaleY: 1.0 + mouthOpen * (MOUTH_MAX_SCALE_Y - 1.0),
-    });
+    const isOpen = mouthOpen >= MOUTH_OPEN_THRESHOLD;
+    result.set("mouth_closed", { visible: !isOpen });
+    result.set("mouth_open",   { visible:  isOpen });
 
     // 腕: body の roll と逆方向に回転（振り子効果 — 体が傾いても腕が自然に垂れる）
     result.set("arm_l", { rotation: -roll * 0.4 });
