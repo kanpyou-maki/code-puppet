@@ -38,3 +38,6 @@ coverage/
 # Local config overrides
 *.local.ts
 *.local.json
+
+# Sampele
+sample/
