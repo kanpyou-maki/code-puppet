@@ -97,7 +97,13 @@ interface Mapper {
 }
 ```
 
-- `DefaultMapper`: headRotation の roll/yaw/pitch → 各パーツの rotation/position に変換。blendShapes の `eyeBlinkLeft` / `eyeBlinkRight` → 目の scaleY に変換。`jawOpen` → 口の rotation/scaleY に変換。
+- `DefaultMapper`: 各パーツへの変換ロジック。
+  - `body`: yaw + roll → rotation（2D近似）
+  - `leaf`: pitch × 0.5 → rotation（うなずきで揺れる）
+  - `eye_l/r`: `eye_*.blink` → scaleY（瞬き）
+  - `mouth`: `mouth.open` → scaleY（口の開閉）
+  - `arm_l/r`: −roll × 0.4 → rotation（振り子効果）
+  - `leg_l/r`: ±pitch × 0.3 → rotation（左右逆方向に開く）
 
 ### main.ts
 
@@ -164,15 +170,19 @@ interface PartTransform {
 ### アバターパーツ階層（初期）
 
 ```
-体（root）
-├── 頭
-│   ├── 目（左）
-│   ├── 目（右）
-│   └── 口
-├── 腕（左）
-├── 腕（右）
-└── 尻尾
+body（大根本体・頭胴一体）← root
+├── leaf（葉っぱ3枚を1パーツ）
+├── eye_l（左目）
+├── eye_r（右目）
+├── mouth（口）
+├── arm_l（左腕・手を含む）
+├── arm_r（右腕・手を含む）
+├── leg_l（左脚・足を含む）
+└── leg_r（右脚・足を含む）
 ```
+
+左右の方向はアバター目線（`_l` = アバターの左 = ユーザーから見て右）。
+ほっぺは `body.png` に描き込み、独立パーツとしては管理しない。
 
 ---
 
