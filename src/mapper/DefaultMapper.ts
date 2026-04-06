@@ -22,7 +22,7 @@ export class DefaultMapper implements Mapper {
     // 本来 yaw は Y 軸・roll は Z 軸の異なる回転だが、2D スプライトでは
     // 1 軸のみ表現できるため加算で近似している。3D 移行時は要見直し。
     result.set("body", {
-      rotation: yaw + roll,
+      rotation: yaw * 0.5 + roll * 0.5,
     });
 
     // 葉っぱ: pitch（うなずき）で前後に揺れるように見せる
@@ -53,7 +53,7 @@ export class DefaultMapper implements Mapper {
     result.set("arm_r", { rotation: -roll * 0.4 });
 
     // 脚: pitch に応じて左右が逆方向に開く（前後の重心移動を表現）
-    result.set("leg_l", { rotation:  pitch * 0.3 });
+    result.set("leg_l", { rotation: pitch * 0.3 });
     result.set("leg_r", { rotation: -pitch * 0.3 });
 
     // cheek_l / cheek_r は静止パーツのため Mapper では操作しない
