@@ -28,8 +28,8 @@ export class RendererImpl implements Renderer {
     this.app = new Application();
     await this.app.init({
       canvas,
-      backgroundAlpha: 0,
-      background: 0x000000,
+      backgroundAlpha: 1,
+      background: 0x00ff00,
       antialias: true,
       autoDensity: true,
       resolution: window.devicePixelRatio ?? 1,
