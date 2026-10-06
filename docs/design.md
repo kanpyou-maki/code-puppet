@@ -41,7 +41,7 @@ src/
                          [RendererImpl]
                       updatePart() でPixiJS Container更新
                                 ↓
-                         <canvas>（背景透過）
+                         <canvas>（マゼンタ背景・OBS でクロマキー合成）
 ```
 
 ### 主要設計判断
@@ -54,6 +54,7 @@ src/
 | Mapper        | 単一クラス（DefaultMapper）                        | 現状のパーツ数であれば1クラスで十分                                         |
 | テクスチャ    | 個別PNG                                            | 初期段階はシンプルさを優先。将来スプライトシートへ移行可能                  |
 | MediaPipe隠蔽 | Trackerインターフェースの外にMediaPipeを露出しない | Tracker差し替え時の影響範囲を最小化                                         |
+| 背景          | マゼンタ単色のクロマキー（[ADR-003](./adr/ADR-003-chroma-key-background.md)） | OBS のクロマキーフィルタで合成する。グリーンは葉っぱが抜けるため不可 |
 
 ---
 
@@ -79,13 +80,15 @@ interface Tracker {
 
 ```typescript
 interface Renderer {
-  init(config: AvatarPartConfig[]): Promise<void>;
+  init(canvas: HTMLCanvasElement): Promise<void>;
+  loadParts(configs: AvatarPartConfig[]): Promise<void>;
   updatePart(id: string, transform: PartTransform): void;
+  getPartCount(): number;
   destroy(): void;
 }
 ```
 
-- `RendererImpl`: PixiJS `Application` を保持。`init()` でSprite/Containerを生成し、`updatePart()` でプロパティを更新する。背景透過は `backgroundAlpha: 0` で実現。
+- `RendererImpl`: PixiJS `Application` を保持。`init()` で canvas にアタッチし、`loadParts()` でSprite/Containerを生成し、`updatePart()` でプロパティを更新する。背景は `backgroundAlpha: 1`・`background: 0xff00ff` の不透明なマゼンタ（`index.html` の `body` も同色）。テクスチャの読み込みに失敗したパーツは図形で代用する。
 
 ### Mapper
 
@@ -93,27 +96,28 @@ interface Renderer {
 
 ```typescript
 interface Mapper {
-  map(frame: TrackingFrame): Map<string, PartTransform>;
+  apply(frame: TrackingFrame): Map<string, PartTransform>;
 }
 ```
 
 - `DefaultMapper`: 各パーツへの変換ロジック。
-  - `body`: yaw + roll → rotation（2D近似）
+  - `body`: (yaw + roll) × 0.5 → rotation（2D近似）
   - `leaf`: pitch × 0.5 → rotation（うなずきで揺れる）
   - `eye_l/r`: `eye_*.blink` → scaleY（瞬き）
-  - `mouth`: `mouth.open` → scaleY（口の開閉）
+  - `mouth_closed` / `mouth_open`: `mouth.open` が 0.1 以上なら `mouth_open` を、未満なら `mouth_closed` を表示（`visible` の排他切替）
   - `arm_l/r`: −roll × 0.4 → rotation（振り子効果）
   - `leg_l/r`: ±pitch × 0.3 → rotation（左右逆方向に開く）
+  - `confidence` が 0.3 未満のフレームは無視する（空の Map を返す）
 
 ### main.ts
 
 初期化フロー:
 
-1. `RendererImpl.init(avatarParts)` でPixiJS起動・パーツロード
+1. `RendererImpl.init(canvas)` でPixiJS起動、`loadParts(AVATAR_PARTS)` でパーツロード
 2. `TrackerImpl.start()` でMediaPipe起動・カメラ開始
 3. PixiJS Ticker に毎フレーム処理を登録:
    - `tracker.getLatestFrame()` で最新フレームを取得
-   - `mapper.map(frame)` でTransform群を生成
+   - `mapper.apply(frame)` でTransform群を生成
    - 各Transformを `renderer.updatePart()` で適用
 
 ---
@@ -174,7 +178,8 @@ body（大根本体・頭胴一体）← root
 ├── leaf（葉っぱ3枚を1パーツ）
 ├── eye_l（左目）
 ├── eye_r（右目）
-├── mouth（口）
+├── mouth_closed（口・閉じ。既定で表示）
+├── mouth_open（口・開き。mouth_closed と排他表示）
 ├── arm_l（左腕・手を含む）
 ├── arm_r（右腕・手を含む）
 ├── leg_l（左脚・足を含む）
@@ -211,6 +216,5 @@ body（大根本体・頭胴一体）← root
 ## 未解決の問題
 
 - MediaPipe FaceLandmarker の blendShapes APIがブラウザ版でどの程度の精度・パフォーマンスを出すか未検証
-- OBSブラウザソースでの背景透過設定（`backgroundAlpha: 0` 以外に追加CSS設定が必要か）
 - headRotation の EulerAngles 単位（ラジアン/度）と MediaPipe 出力値の対応付け
 - 全身トラッキング追加時の `PoseData` / `HandData` の具体的な型定義

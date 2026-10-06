@@ -79,3 +79,4 @@ docs/             →  自由にリンク可。docs/ 外への参照は相対パ
 |-----|------|
 | [ADR-001](./docs/adr/ADR-001-use-pixijs-v8.md) | レンダリングエンジンとして PixiJS v8 を採用する |
 | [ADR-002](./docs/adr/ADR-002-async-tracking-buffer.md) | MediaPipe と PixiJS の非同期分離（latestFrame バッファ方式） |
+| [ADR-003](./docs/adr/ADR-003-chroma-key-background.md) | 背景は透過ではなくマゼンタのクロマキーにする |

@@ -2,6 +2,7 @@
 
 - **ステータス**: 承認済み
 - **決定日**: 2026-03-29
+- **補足**: 背景透過（`backgroundAlpha: 0`）の要件は [ADR-003](./ADR-003-chroma-key-background.md) でクロマキーに変更した。PixiJS v8 の採用は有効
 
 ---
 
