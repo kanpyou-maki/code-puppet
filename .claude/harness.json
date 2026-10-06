@@ -1,0 +1,12 @@
+{
+  "$comment": "このプロジェクトのハーネスコマンド定義。エージェント・スキルはテスト等のコマンドをハードコードせず、このファイルから読むこと。コマンドはリポジトリのルートで実行する。",
+  "language": "typescript",
+  "commands": {
+    "test": "npm test",
+    "coverage": "npx vitest run --coverage",
+    "typecheck": "npx tsc --noEmit",
+    "build": "npm run build",
+    "structure": "node .claude/hooks/structure-test.js",
+    "archLint": "echo '{}' | node .claude/hooks/arch-lint.js"
+  }
+}

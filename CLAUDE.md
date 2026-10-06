@@ -1,73 +1,94 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working in this project.
+Claude Code の作業指示。**常に日本語で応答すること。**
+セッション開始時は `PROJECT_STATUS.md` を最初に読んで状態を復元すること。
 
-## Language
+## プロジェクト概要
 
-Always respond in Japanese.
+**code-puppet** — カメラの顔トラッキングに連動してアバターを動かす、YouTube 配信用の Web アプリ。OBS で合成して使う。現在の実装はマゼンタ背景のクロマキーで、要件・設計書の「背景透過」とは食い違っている。
 
-## Development Workflow
+技術スタック: TypeScript / Vite / PixiJS v8 / MediaPipe FaceLandmarker / Vitest
 
-This project follows a **Discussion → Document → TDD** cycle. Never skip phases.
+## ナビゲーション
 
-### Phase 1: Discussion
-- Explore ideas, clarify requirements, evaluate trade-offs with the user
-- Do not write code until requirements and approach are agreed upon
-- Use the `architect` agent for system design decisions
-- Use the `planner` agent to break down the agreed approach into steps
+| ドキュメント | 内容 |
+|------------|------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | ディレクトリ構造・依存ルール・アーキテクチャ規則 |
+| [docs/prd.md](./docs/prd.md) | 要件・ユーザーストーリー・スコープ外 |
+| [docs/design.md](./docs/design.md) | 設計詳細・データフロー・データモデル |
+| [docs/golden-rules.md](./docs/golden-rules.md) | 不変の品質原則（GC エージェントが検証） |
+| [docs/friction-log.md](./docs/friction-log.md) | 摩擦ログ（ハーネス改善の入力） |
+| [docs/QUALITY_SCORE.md](./docs/QUALITY_SCORE.md) | 品質スコア・ギャップ追跡 |
+| [docs/PLANS.md](./docs/PLANS.md) | 実行プラン一覧 |
+| [docs/design-docs/core-beliefs.md](./docs/design-docs/core-beliefs.md) | コーディング原則・エージェントファースト設計思想 |
+| [docs/adr/](./docs/adr/) | アーキテクチャ決定レコード |
+| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | 次のセッションへの引き継ぎメモ（6KB 以内） |
 
-### Phase 2: Documentation
-- Use the `doc-updater` agent to produce PRD, Design Doc, and ADRs from the discussion
-- Code must not start until the user has reviewed and approved the documents
-- Place documents in `docs/` (PRD → `docs/prd.md`, Design Doc → `docs/design.md`, ADRs → `docs/adr/ADR-NNN-title.md`)
+## 開発ワークフロー
 
-### Phase 3: Implementation (TDD)
-- Use the `tdd-guide` agent to enforce test-first development
-- Cycle: RED (write failing test) → GREEN (minimal implementation) → REFACTOR
-- Minimum 80% coverage required before a task is considered complete
-- Use the `code-reviewer` agent after every meaningful change
-- Use the `security-reviewer` agent when touching auth, APIs, or user input
+**Discussion → Document → TDD** のサイクルで進める。フェーズのスキップ禁止。
 
-### Phase 4: Maintenance
-- Use the `refactor-cleaner` agent for dead code removal and deduplication
-- Keep documents in `docs/` updated when architecture changes
+| フェーズ | 内容 | 使用エージェント |
+|---------|------|----------------|
+| 1. 議論 | 要件整理・方針確定 | `architect`, `planner` |
+| 2. ドキュメント | PRD・Design Doc・ADR 作成 | `doc-updater` |
+| 3. 実装 | TDD（RED→GREEN→REFACTOR）| `tdd-guide`, `code-reviewer` |
+| 4. メンテナンス | 技術負債解消・GC | `refactor-cleaner`, `gc-agent` |
 
-## Project Status Management
+## 標準コマンド
 
-**MANDATORY**: Keep `PROJECT_STATUS.md` up to date throughout every session.
+コマンドは `.claude/harness.json` に定義されている。ハードコードせず、そこから読むこと。
 
-- Update the file after every completed task and every phase transition
-- The goal is always-accurate sync between Claude and the user: "what is done, what is in progress, what is next"
-- At session start, read `PROJECT_STATUS.md` first to restore context
-- At session end (or after each major milestone), write back the updated status
+```bash
+# テストコマンドの取得例
+node -pe "require('./.claude/harness.json').commands.test"
+```
 
-## Available Agents
+| ツール | 用途 |
+|--------|------|
+| `.claude/harness.json` の `commands.test` | テスト実行 |
+| `node .claude/hooks/arch-lint.js` | アーキテクチャ規則検証 |
+| `node .claude/hooks/structure-test.js` | 構造整合性・知識グラフ検証 |
+| `gh pr create` / `gh pr list` | PR の作成・確認 |
+| スキル (`.claude/skills/*/SKILL.md`) | review-loop、improve-harness 等の手順 |
 
-| Agent | Role | Typical Trigger |
-|-------|------|----------------|
-| `architect` | System design, trade-off analysis, ADR drafting | Phase 1 — design decisions |
-| `planner` | Feature breakdown into actionable steps | Phase 1 — after approach is agreed |
-| `doc-updater` | Create/update PRD, Design Doc, ADRs | Phase 2 — documentation |
-| `tdd-guide` | TDD workflow, test scaffolding, coverage | Phase 3 — all coding |
-| `code-reviewer` | Code quality, patterns, best practices | Phase 3 — after changes |
-| `security-reviewer` | OWASP Top 10, secrets, access control | Phase 3 — security-sensitive code |
-| `refactor-cleaner` | Dead code, duplicates, dependency cleanup | Phase 4 — maintenance |
+## エージェント一覧
 
-## Coding Principles
+### 開発サポート
 
-- **Tests first**: never write implementation before a failing test exists
-- **Small files**: prefer many small focused files over large ones (aim for <300 lines)
-- **Immutability**: prefer spread/map/filter over direct mutation
-- **No debug code**: remove all `console.log` before marking a task complete
-- **Parameterized queries**: never concatenate user input into SQL or shell commands
-- **Env vars**: never hardcode secrets; always use environment variables
+| エージェント | 役割 | 起動トリガー |
+|-------------|------|------------|
+| `architect` | システム設計・ADR 起草 | Phase 1 — 設計判断 |
+| `planner` | タスク分解・実行プラン作成 | Phase 1 — 方針合意後 |
+| `doc-updater` | PRD・Design Doc・ADR 作成 | Phase 2 — ドキュメント化 |
+| `tdd-guide` | TDD ワークフロー・テスト設計 | Phase 3 — コーディング |
+| `code-reviewer` | コード品質・パターン確認（アドバイザリ）| Phase 3 — 参考意見 |
+| `refactor-cleaner` | 技術負債・重複除去 | Phase 4 — メンテナンス |
+| `gc-agent` | 黄金原則逸脱検知・修正 PR 作成 | Phase 4 — 定期実行 |
 
-## Document Templates
+### レビュアー（Ralph Wiggum ループ）
 
-When the `doc-updater` agent creates documents, use these structures:
+PR 作成前に `.claude/skills/review-loop/SKILL.md` の手順で全員を通過させること。
 
-**PRD** (`docs/prd.md`): Problem statement · User stories · Success metrics · Out of scope
+| エージェント | ステージ | 審査観点 |
+|-------------|---------|---------|
+| `self-reviewer` | Stage 0 | 実装の自己批判的評価 |
+| `arch-reviewer` | Stage 1 | アーキテクチャ規則（ARCH-NNN）|
+| `style-reviewer` | Stage 1 | コーディングスタイル・命名・debug コード |
+| `test-reviewer` | Stage 1 | テストカバレッジ≥80%・独立性 |
+| `security-reviewer` | Stage 2 | OWASP Top 10・シークレット漏洩 |
+| `docs-reviewer` | Stage 2 | 実装↔ドキュメント整合性・ADR 最新性 |
 
-**Design Doc** (`docs/design.md`): Overview · Architecture · Component design · Data models · Trade-offs · Open questions
+## ハーネスの自己改善
 
-**ADR** (`docs/adr/ADR-NNN-title.md`): Context · Decision · Consequences (positive/negative) · Alternatives considered · Status
+エージェント設定（`.claude/` 配下）自体もこのリポジトリの改善対象である。
+
+- 繰り返す摩擦は `docs/friction-log.md` に記録すること
+- 蓄積した摩擦は `improve-harness` スキルで設定改善に変換すること
+- 汎用的な改善は `sync-upstream` スキルで master へ還元すること
+
+## プロジェクト状態管理
+
+`PROJECT_STATUS.md` は次のセッションへの引き継ぎメモ。PR を作る前とセッションを閉じる前に書き換える（追記しない。終わった項目は消す）。
+載せるのは「現在のフェーズ・進行中・次にやること・人間待ち」だけで、上限は 6KB（ARCH-007）。
+決定・知見・履歴の置き場所は `PROJECT_STATUS.md` の冒頭に書いてある。

@@ -1,59 +1,27 @@
 # プロジェクト状態
 
-> Claude Code が自律的に管理するファイル。タスク完了・フェーズ移行のたびに更新すること。
-> セッション開始時は必ずこのファイルを読んで状態を復元すること。
+> 次のセッションへの引き継ぎメモ。セッションの最初に読み、PR を作る前とセッションを閉じる前に書き換える。
+> 載せるのは下の 4 節だけ。追記せず、終わった項目は消す。上限は 6KB（ARCH-007）。
+> 決定は `docs/adr/` か設計書、知見は `docs/` の該当文書、繰り返すハマりどころは `docs/friction-log.md`、
+> タスク分解は `docs/exec-plans/active/` に書く。終わった作業は git log と PR が記録している。
+> API キー・トークン・パスワード・個人情報は書かない（git に残り、毎セッション読まれる）。必要なら変数名か取得場所だけを書く。
 
 ## 現在のフェーズ
 
-<!-- 選択肢: 議論中 | ドキュメント作成中 | 実装中 | レビュー中 | メンテナンス中 | 完了 -->
-
-実装中
-
-## 概要
-
-TypeScript / PixiJS v8 / MediaPipe を使ったYouTube配信用アバター制御Webアプリ。
-モックアップ（仮パーツ）でカメラトラッキングと連動するアバターが動作する状態になった。
-
-## 完了済み
-
-- [x] 初回の議論・要件整理
-- [x] アーキテクチャ設計（architect エージェント）
-- [x] PRD 作成 (`docs/prd.md`)
-- [x] Design Doc 作成 (`docs/design.md`)
-- [x] ADR-001: PixiJS v8 採用 (`docs/adr/ADR-001-use-pixijs-v8.md`)
-- [x] ADR-002: MediaPipe/PixiJS 非同期分離 (`docs/adr/ADR-002-async-tracking-buffer.md`)
-- [x] Vite + TypeScript + Vitest プロジェクト初期化
-- [x] `src/types/tracking.ts` — 型定義（TrackingFrame, FaceData, AvatarPartConfig 等）
-- [x] `src/renderer/` — Renderer インターフェース + RendererImpl（PixiJS v8 仮パーツ描画）
-- [x] `src/tracker/` — Tracker インターフェース + TrackerImpl（MediaPipe FaceLandmarker）
-- [x] `src/mapper/` — Mapper インターフェース + DefaultMapper
-- [x] `src/avatar/parts.ts` — パーツ設定（体・頭・目×2・口・腕×2・尻尾）
-- [x] `src/main.ts` — エントリポイント統合
+実装中。PNG 素材のアバター（全 10 パーツ）が、カメラトラッキングに連動して動く段階。図形での代用（`RendererImpl.ts` の `MOCK_SHAPES`）は、読み込み失敗時のフォールバックとして残っている（コード上は削除予定の TODO）。
 
 ## 進行中
 
-_なし_
+- ブランチ `chore/harness-migrate-2026-10-07`: claude-config-master の現行レイアウトへの移行。PR のレビュー待ち
 
 ## 次にやること
 
+- [ ] 既存の失敗を直す（2026-10-07 のハーネス移行時に確認。移行前から）: `src/mapper/Mapper.test.ts` の 5 件（body の rotation と mouth の scaleY が期待値の半分）、`npx tsc --noEmit` の 6 件（`import.meta.env` が 4 件、`TrackerImpl.ts` の `Float32Array` が 1 件、`Tracker.test.ts` の未使用 import が 1 件。このため `npm run build` も通らない）
 - [ ] ブラウザで `npm run dev` を実行して動作確認
 - [ ] code-reviewer エージェントによるコードレビュー
-- [ ] 実際の PNG 素材に差し替え（RendererImpl のテクスチャ読み込み対応）
-- [ ] UIパネル実装（感度スライダー等）
+- [ ] 背景の扱いを揃える。実装はマゼンタ背景のクロマキー（`RendererImpl.ts` の `background: 0xff00ff`）だが、`docs/prd.md`・`docs/design.md`・ADR-001 は背景透過のまま。`docs/prd.md` の初期アバターパーツ（体・頭・目×2・口・腕×2・尻尾）も、実装（body・leaf・目×2・口の開閉・腕×2・脚×2）とずれている
+- [ ] UI パネル実装（感度スライダー等）。`docs/prd.md` は GUI 設定画面・スライダーをスコープ外としているので、着手前に要件を見直す
 
-## 決定事項
-
-| #   | 決定内容                                                | 理由                                                          | ADR     |
-| --- | ------------------------------------------------------- | ------------------------------------------------------------- | ------- |
-| 1   | レンダリングエンジンに PixiJS v8 を採用                 | WebGPU/WebGL2対応、Scene Graph、透明Canvas、TypeScript対応    | ADR-001 |
-| 2   | MediaPipe と PixiJS を latestFrame バッファで非同期分離 | 処理サイクルが異なる2系統を疎結合にし、描画レートを安定させる | ADR-002 |
-
-## ブロッカー
+## 人間待ち
 
 _なし_
-
-## メモ
-
-- モックアップ段階では実PNG不要。PixiJS Graphics（図形）で仮パーツを描画する
-- パーツ構成: 体(root) > 頭(目×2, 口) / 腕×2 / 尻尾
-- 将来の全身拡張: TrackingFrame の `pose?` / `hands?` を追加するだけで対応できる設計

@@ -41,3 +41,6 @@ coverage/
 
 # Sampele
 sample/
+
+# claude-config-master へのマシン固有の絶対パス（sync-downstream スキルが参照）
+.claude/master-path
