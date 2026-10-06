@@ -5,7 +5,7 @@ Claude Code の作業指示。**常に日本語で応答すること。**
 
 ## プロジェクト概要
 
-**code-puppet** — カメラの顔トラッキングに連動してアバターを動かす、YouTube 配信用の Web アプリ。OBS で合成して使う。現在の実装はマゼンタ背景のクロマキーで、要件・設計書の「背景透過」とは食い違っている。
+**code-puppet** — カメラの顔トラッキングに連動してアバターを動かす、YouTube 配信用の Web アプリ。OBS で合成して使う。背景はマゼンタ単色で、OBS のクロマキーで抜く（ADR-003）。
 
 技術スタック: TypeScript / Vite / PixiJS v8 / MediaPipe FaceLandmarker / Vitest
 
