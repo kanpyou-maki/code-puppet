@@ -12,7 +12,8 @@
 
 ## 進行中
 
-- ブランチ `chore/harness-migrate-2026-10-07`: claude-config-master の現行レイアウトへの移行。PR のレビュー待ち
+- ブランチ `fix/stale-tests-and-type-errors`: 実装に追従していなかったテストと型エラーの修正。PR のレビュー待ち
+- ブランチ `docs/chroma-key-background`: ADR-003（クロマキー背景）の追加と PRD・設計書の更新。PR のレビュー待ち
 
 ## 次にやること
 
