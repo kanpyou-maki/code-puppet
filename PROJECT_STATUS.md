@@ -12,11 +12,11 @@
 
 ## 進行中
 
-- ブランチ `chore/harness-migrate-2026-10-07`: claude-config-master の現行レイアウトへの移行。PR のレビュー待ち
+- ブランチ `fix/stale-tests-and-type-errors`: 実装に追従していなかったテストと型エラーの修正。PR のレビュー待ち
+- ブランチ `docs/chroma-key-background`: ADR-003（クロマキー背景）の追加と PRD・設計書の更新。PR のレビュー待ち
 
 ## 次にやること
 
-- [ ] 既存の失敗を直す（2026-10-07 のハーネス移行時に確認。移行前から）: `src/mapper/Mapper.test.ts` の 5 件（body の rotation と mouth の scaleY が期待値の半分）、`npx tsc --noEmit` の 6 件（`import.meta.env` が 4 件、`TrackerImpl.ts` の `Float32Array` が 1 件、`Tracker.test.ts` の未使用 import が 1 件。このため `npm run build` も通らない）
 - [ ] ブラウザで `npm run dev` を実行して動作確認
 - [ ] code-reviewer エージェントによるコードレビュー
 - [ ] 背景の扱いを揃える。実装はマゼンタ背景のクロマキー（`RendererImpl.ts` の `background: 0xff00ff`）だが、`docs/prd.md`・`docs/design.md`・ADR-001 は背景透過のまま。`docs/prd.md` の初期アバターパーツ（体・頭・目×2・口・腕×2・尻尾）も、実装（body・leaf・目×2・口の開閉・腕×2・脚×2）とずれている

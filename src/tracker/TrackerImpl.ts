@@ -141,7 +141,7 @@ export class TrackerImpl implements Tracker {
    * 顔変換行列（4x4 列優先）からオイラー角を計算する。
    * MediaPipe の FacialTransformationMatrix は OpenCV 座標系。
    */
-  private matrixToEuler(m: Float32Array): EulerAngles {
+  private matrixToEuler(m: ArrayLike<number>): EulerAngles {
     // 列優先 4x4 行列から回転成分を取り出す
     // pitch = arcsin(-m[6])  (X軸回転)
     // yaw   = arctan2(m[2], m[10]) (Y軸回転)
