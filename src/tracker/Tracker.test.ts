@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import type { Tracker } from "./Tracker.js";
 import type { TrackingFrame, FaceData, EulerAngles } from "../types/tracking.js";
 

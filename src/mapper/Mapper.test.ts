@@ -32,17 +32,17 @@ describe("DefaultMapper", () => {
 
   it("body の rotation が yaw に基づいて設定される", () => {
     const result = mapper.apply(makeFrame(0, 0.5, 0));
-    expect(result.get("body")?.rotation).toBeCloseTo(0.5, 5);
+    expect(result.get("body")?.rotation).toBeCloseTo(0.25, 5);
   });
 
   it("body の rotation が roll に基づいて設定される", () => {
     const result = mapper.apply(makeFrame(0, 0, 0.3));
-    expect(result.get("body")?.rotation).toBeCloseTo(0.3, 5);
+    expect(result.get("body")?.rotation).toBeCloseTo(0.15, 5);
   });
 
   it("yaw と roll が合算されて body の rotation になる", () => {
     const result = mapper.apply(makeFrame(0, 0.4, 0.2));
-    expect(result.get("body")?.rotation).toBeCloseTo(0.6, 5);
+    expect(result.get("body")?.rotation).toBeCloseTo(0.3, 5);
   });
 
   it("leaf の rotation が pitch に基づいて設定される", () => {
@@ -60,15 +60,22 @@ describe("DefaultMapper", () => {
     expect(result.get("eye_l")?.scaleY).toBeCloseTo(1.0, 5);
   });
 
-  it("mouth.open が 1.0 のとき mouth の scaleY が最大値になる", () => {
-    const result = mapper.apply(makeFrame(0, 0, 0, { "mouth.open": 1.0 }));
-    const scaleY = result.get("mouth")?.scaleY ?? 0;
-    expect(scaleY).toBeGreaterThan(1.0);
+  it("mouth.open が閾値以上のとき mouth_open が表示され mouth_closed が隠れる", () => {
+    const result = mapper.apply(makeFrame(0, 0, 0, { "mouth.open": 0.1 }));
+    expect(result.get("mouth_open")?.visible).toBe(true);
+    expect(result.get("mouth_closed")?.visible).toBe(false);
   });
 
-  it("mouth.open が 0.0 のとき mouth の scaleY が 1.0", () => {
-    const result = mapper.apply(makeFrame(0, 0, 0, { "mouth.open": 0.0 }));
-    expect(result.get("mouth")?.scaleY).toBeCloseTo(1.0, 5);
+  it("mouth.open が閾値未満のとき mouth_closed が表示され mouth_open が隠れる", () => {
+    const result = mapper.apply(makeFrame(0, 0, 0, { "mouth.open": 0.09 }));
+    expect(result.get("mouth_open")?.visible).toBe(false);
+    expect(result.get("mouth_closed")?.visible).toBe(true);
+  });
+
+  it("mouth.open が未指定のとき mouth_closed が表示される", () => {
+    const result = mapper.apply(makeFrame(0, 0, 0));
+    expect(result.get("mouth_open")?.visible).toBe(false);
+    expect(result.get("mouth_closed")?.visible).toBe(true);
   });
 
   it("cheek_l / cheek_r は Mapper から操作されない（静止パーツ）", () => {
