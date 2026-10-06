@@ -153,7 +153,7 @@ interface TrackingFrame {
 // アバターパーツ設定
 interface AvatarPartConfig {
   id: string;
-  texturePath: string;
+  texturePath?: string; // 省略時は図形の仮パーツで代用
   parentId?: string; // 親パーツID（Scene Graph用）
   defaultPosition: { x: number; y: number };
   pivot: { x: number; y: number };
